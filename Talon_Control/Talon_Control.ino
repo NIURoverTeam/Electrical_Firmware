@@ -102,7 +102,7 @@ Servo myservo6;
             Serial.print("SpeedByte: ");    
             Serial.println(speedByte);      // print the integer
             
-            PWMval = map(speedByte, 0, 100, 1000, 1500);     // scale it to use it with the servo (value between 0 and 180)
+            PWMval = map(speedByte, 0, 100, 1500, 1000);     // scale it to use it with the servo (value between 0 and 180)
             myservo1.write(PWMval);                           // sets the servo position according to the scaled value
             myservo2.write(PWMval);
             myservo3.write(PWMval);

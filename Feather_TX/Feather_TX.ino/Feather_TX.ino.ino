@@ -98,7 +98,7 @@ void loop() {
   byte serialBuf[1];
   int radiopacketbuf;
 
-  Serial.println("1 = Left | 2 = Right | 3 = Reverse | 4 = Forward | 0 = Stop");
+  Serial.println("1 = Forward | 2 = Reverse | 3 = Left | 4 = Right | 0 = Stop");
   Serial.print("Which Direction would you like?: ");
 
   //wait until user enters something
