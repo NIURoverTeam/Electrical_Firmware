@@ -38,18 +38,21 @@ RHReliableDatagram rf69_manager(rf69, MY_ADDRESS);
 
 int16_t packetnum = 0;  // packet counter, we increment per xmission
 
+unsigned long tick;
+byte radiopacket[4];
+
 void setup() 
 {
   Serial.begin(115200);
   //while (!Serial) { delay(1); } // wait until serial console is open, remove if not tethered to computer
-  Serial.println("Enter something");
+  //Serial.println("Enter something");
 
   pinMode(LED, OUTPUT);     
   pinMode(RFM69_RST, OUTPUT);
   digitalWrite(RFM69_RST, LOW);
 
-  Serial.println("Feather Addressed RFM69 TX Test!");
-  Serial.println();
+  //Serial.println("Feather Addressed RFM69 TX Test!");
+  //Serial.println();
 
   // manual reset
   digitalWrite(RFM69_RST, HIGH);
@@ -80,57 +83,57 @@ void setup()
   pinMode(LED, OUTPUT);
 
   Serial.println("RFM69 radio @");  Serial.print((int)RF69_FREQ);  Serial.println(" MHz");
+
+  tick = millis();
   
 }
 
 
 // Dont put this on the stack:
-uint8_t buf[2];
+uint8_t buf[4];
 uint8_t data[] = "  OK";
 
 int packetsize = 25;
 
 
 void loop() {
-  delay(1000);  // Wait 1 second between transmits, could also 'sleep' here!
+  //delay(1000);  // Wait 1 second between transmits, could also 'sleep' here!
   
-  byte radiopacket[2];
+
   byte serialBuf[1];
   int radiopacketbuf;
 
-  Serial.println("1 = Forward | 2 = Reverse | 3 = Left | 4 = Right | 0 = Stop");
-  Serial.print("Which Direction would you like?: ");
+  if (millis() - tick >= 1000) {
+    stopMovement();
+    tick = millis();
+  }
 
-  //wait until user enters something
-  while(Serial.available() == 0)
-          {
-      
-          }
+  if (Serial.available()) {
+    uint32_t first = Serial.read();
+    while (!Serial.available()) {
+      if (millis() - tick >= 1000) {
+        stopMovement();
+        tick = millis();
+        return;
+      }
+    }
+    uint32_t second = Serial.read();
+    uint32_t third = Serial.read();
+    uint32_t fourth = Serial.read();
 
-  radiopacketbuf = Serial.parseInt();
-  radiopacket[0] = radiopacketbuf;
-  Serial.println(radiopacket[0], DEC);
+  radiopacket[0] = first;
+  radiopacket[1] = second;
+  radiopacket[2] = third;
+  radiopacket[3] = fourth;
 
-  Serial.print("radiopacketbuf: ");
-  Serial.println(radiopacketbuf);
-
-  //clear serial monitor buffer
-  serialFlush();
-
-  Serial.println("");
-  Serial.print("What percent speed would you like? (0 to 100): ");
-
-  while(Serial.available() == 0)
-          {
-      
-          }
-
-  radiopacketbuf = Serial.parseInt();
-  radiopacket[1] = radiopacketbuf;
+  /*Serial.print("radiopacket[0]: ");
+  Serial.println(radiopacket[0]);
+  Serial.print("radiopacket[1]: ");
   Serial.println(radiopacket[1], DEC);
-
-  Serial.print("radiopacketbuf: ");
-  Serial.println(radiopacketbuf);
+  Serial.print("radiopacket[2]: ");
+  Serial.println(radiopacket[2]);
+  Serial.print("radiopacket[3]: ");
+  Serial.println(radiopacket[3], DEC);*/
 
   //Begin TX stuff
   // Send a message to the DESTINATION!
@@ -141,17 +144,17 @@ void loop() {
     if (rf69_manager.recvfromAckTimeout(buf, &len, 2000, &from)) {
       buf[len] = 0; // zero out remaining string
       
-      Serial.print("Got reply from #"); Serial.print(from);
+      /*Serial.print("Got reply from #"); Serial.print(from);
       Serial.print(" [RSSI :");
       Serial.print(rf69.lastRssi());
       Serial.print("] : ");
-      Serial.println((char*)buf);     
-      Blink(LED, 40, 3); //blink LED 3 times, 40ms between blinks
+      Serial.println((char*)buf);  */   
+      //Blink(LED, 40, 3); //blink LED 3 times, 40ms between blinks
     } else {
-      Serial.println("No reply, is anyone listening?");
+      //Serial.println("No reply, is anyone listening?");
     }
   } else {
-    Serial.println("Sending failed (no ack)");
+    //Serial.println("Sending failed (no ack)");
   }
   //End TX stuff
   
@@ -159,11 +162,12 @@ void loop() {
   memset(radiopacket,0,sizeof(radiopacket));
   
   //just print a line to separate transactions
-  Serial.println("-----------------------------------------------------------------------");
-  
+  //Serial.println("-----------------------------------------------------------------------");
+
   //clear serial monitor buffer
-  serialFlush();
-    }
+  //serialFlush();
+  } 
+}
 //}
 
 void Blink(byte PIN, byte DELAY_MS, byte loops) {
@@ -180,4 +184,11 @@ void serialFlush(){
     char t = Serial.read();
   }
 } 
+
+void stopMovement () {
+  radiopacket[0] = 0;
+  radiopacket[1] = 0;
+  radiopacket[2] = 0;
+  radiopacket[3] = 0;
+}
 

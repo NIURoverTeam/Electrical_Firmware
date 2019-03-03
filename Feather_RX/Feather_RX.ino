@@ -88,7 +88,7 @@ void setup()
 // Dont put this on the stack:
 uint8_t data[] = "And hello back to you";
 // Dont put this on the stack:
-byte buf[2];
+byte buf[4];
 
 
 int value;
@@ -106,15 +106,19 @@ void loop()
         {
           //buf[len] = 0; // zero out remaining string
           
-          Serial.print("Got packet from #"); Serial.print(from);
+          /*Serial.print("Got packet from #"); Serial.print(from);
           Serial.print(" [RSSI :");
           Serial.print(rf69.lastRssi());
           Serial.print("] : [");
           Serial.print(buf[0]);
           Serial.print("], [");
           Serial.print(buf[1]);
+          Serial.print("], [");
+          Serial.print(buf[2]);
+          Serial.print("], [");
+          Serial.print(buf[3]);
           Serial.println("]");
-          Blink(LED, 40, 3); //blink LED 3 times, 40ms between blinks
+          Blink(LED, 40, 3); //blink LED 3 times, 40ms between blinks*/
     
           // Send a reply back to the originator client
           if (!rf69_manager.sendtoWait(data, sizeof(data), from))
@@ -123,24 +127,36 @@ void loop()
           //End RF Receive stuff
 
           //Begin i2c Stuff
-          int dirByte = 0;
-          int speedByte = 0;
+          int lDirByte = 0;
+          int lSpeedByte = 0;
+          int rDirByte = 0;
+          int rSpeedByte = 0;
 
           //set dirByte and speedByte 
-          dirByte = buf[0];
-          speedByte = buf[1];
-    
+          lDirByte = buf[0];
+          lSpeedByte = buf[1];
+          rDirByte = buf[2];
+          rSpeedByte = buf[3];
+          
           Wire.beginTransmission(8);        // transmit to device #4
-          Wire.write(dirByte);              // sends one byte
-          Wire.write(speedByte);
+          Wire.write(lDirByte);              // sends one byte
+          Wire.write(lSpeedByte);
+          Wire.write(rDirByte);
+          Wire.write(rSpeedByte);
           Wire.endTransmission();           // stop transmitting
 
           //print just to double check on the serial monitor
-          Serial.print("dirByte is: ");     
-          Serial.println(dirByte);
+          /*Serial.print("lDirByte is: ");     
+          Serial.println(lDirByte);
     
-          Serial.print("speedByte is: ");
-          Serial.println(speedByte);
+          Serial.print("lSpeedByte is: ");
+          Serial.println(lSpeedByte);
+
+          Serial.print("rDirByte is: ");     
+          Serial.println(rDirByte);
+    
+          Serial.print("rSpeedByte is: ");
+          Serial.println(rSpeedByte);*/
 
           //clear buf out
           memset(buf,0,sizeof(buf));
