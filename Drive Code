@@ -1,5 +1,6 @@
 
 #include <Servo.h>
+editing
 //LED Pins and colors
 int stationaryLED = 7; //Red
 int automaticLED = 6; //Blue
