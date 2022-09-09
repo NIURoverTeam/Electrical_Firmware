@@ -1,0 +1,262 @@
+
+#include <Servo.h>
+//LED Pins and colors
+int stationaryLED = 7; //Red
+int automaticLED = 6; //Blue
+int manualLED = 5; //Green
+int reverseLED = 4; //White
+int tankLED = 3; //Yellow
+
+//Joystick pins and values
+int Xpin = A0;
+int Xval;
+int Ypin = A1;
+int Yval;
+
+//pins and variables used to switch between, tank and manual, and manual and automatic 
+int tankState = 0;
+int driveModeState = 1;
+int driveButtonNew;
+int driveButtonOld = 1;
+int driveButtonPin = 8;
+int driveModePin = 2;
+int driveModeOld = 1;
+int driveModeNew;
+
+//declaring TalonSRXs
+Servo LTalon;
+Servo RTalon;
+int LServoPin = 9;
+int RServoPin = 10;
+
+//variables for motor speeds
+float motSpeedLeft;
+float motSpeedRight;
+
+//calibration button value and pin
+int calibrationButton = 12;
+int calibrationButtonVal;
+
+//function that calibrates joystick
+int getNewVal(int, int);
+
+//variables used for calibrating joystick
+int XbadButtonVal = 512;
+int YbadButtonVal = 512;
+int XnewVal;
+int YnewVal;
+
+void setup()
+{
+  // put your setup code here, to run once:
+  Serial.begin(9600); //starts serial screen
+
+  pinMode(automaticLED, OUTPUT);
+  pinMode(manualLED, OUTPUT);
+  pinMode(reverseLED, OUTPUT);
+  pinMode(stationaryLED, OUTPUT);//activates LED pins
+  pinMode(tankLED, OUTPUT); //
+  pinMode(Xpin, INPUT); //for reading X and Y pins
+  pinMode(Ypin, INPUT);
+
+  digitalWrite(calibrationButton, HIGH); //turns on calibrationbutton
+  digitalWrite(driveButtonPin, HIGH);  //sets button values to 1
+  digitalWrite(driveModePin, HIGH);
+
+  LTalon.attach(LServoPin); //attaches Servo to pins
+  RTalon.attach(RServoPin);
+
+}
+
+void loop()
+{
+  //put your main code here, to run repeatedly:
+
+  /***************************************
+    puts calibration button value into a variable and puts joysticks x and y value("center points") into variables
+  ***************************************/
+
+  calibrationButtonVal = digitalRead(calibrationButton);
+
+  if (calibrationButtonVal == 0)
+  {
+    XbadButtonVal = analogRead(Xpin);
+    YbadButtonVal = analogRead(Ypin);
+  }
+
+  /**************************************
+    Gives value to drive mode variable(driveModeState) and turns on/off automaticLED and manualLED
+  ***************************************/
+
+  driveModeNew = digitalRead(driveModePin);
+
+  if (driveModeOld == 0 && driveModeNew == 1)
+  {
+
+    if (driveModeState == 0)
+    {
+      digitalWrite( automaticLED, LOW);
+      digitalWrite( manualLED, HIGH);
+      driveModeState = 1;
+    }
+
+    else
+    {
+      digitalWrite( automaticLED, HIGH);
+      digitalWrite( manualLED, LOW);
+      driveModeState = 0;
+    }
+
+  }
+  driveModeOld = driveModeNew;
+  //Serial.print(driveModeState);
+  //Serial.print(driveModeOld);
+  //Serial.println(driveModeNew);
+
+  if (driveModeState == 1)
+  {
+    /**************************************
+      Gives value to tank drive variable(tankState) and turns on/off tankLED
+    ***************************************/
+    digitalWrite( manualLED, HIGH);
+    driveButtonNew = digitalRead( driveButtonPin );
+    if ( driveButtonOld == 0 && driveButtonNew == 1)
+    {
+
+      if ( tankState == 0)
+      {
+        digitalWrite( tankLED, HIGH);
+        tankState = 1;
+      }
+
+      else
+      {
+        digitalWrite( tankLED, LOW);
+        tankState = 0;
+      }
+
+    }
+
+    driveButtonOld = driveButtonNew;
+    /**************************************
+      Forward and reverse
+    ***************************************/
+
+    if (tankState == 0)
+    {
+      Yval = analogRead( Ypin );
+      YnewVal = getNewVal( YbadButtonVal, Yval);
+
+      //1023. is the same as setting the value as a float.
+      motSpeedLeft = ( -1000.0 / 1023. ) * ( YnewVal ) + 2000;
+      motSpeedRight = ( -1000.0 / 1023. ) * ( YnewVal ) + 2000;
+
+      LTalon.write( motSpeedLeft );
+      RTalon.write( motSpeedRight );
+    }
+
+    /**************************************
+      Tank drive
+    ***************************************/
+    if (tankState == 1)
+    {
+      Xval = analogRead( Xpin );
+      XnewVal = getNewVal( XbadButtonVal, Xval);
+
+      motSpeedLeft = ( 1000. / 1023. ) * ( XnewVal ) + 1000;
+      motSpeedRight = ( -1000. / 1023. ) * ( XnewVal ) + 2000;
+
+      LTalon.write( motSpeedLeft );
+      RTalon.write( motSpeedRight );
+    }
+
+    /**************************************
+      turns on and off stationaryLED(red) telling user if there is movement or not (on = no movement, off = movement)
+    ***************************************/
+
+    if (motSpeedLeft > 1535 || motSpeedLeft < 1485)
+    {
+      digitalWrite(stationaryLED, LOW);
+    }
+
+    if (motSpeedLeft < 1535 && motSpeedLeft > 1485)
+    {
+      digitalWrite(stationaryLED, HIGH);
+    }
+
+    if (motSpeedRight > 1535 || motSpeedRight < 1485)
+    {
+      digitalWrite(stationaryLED, LOW);
+    }
+
+    if (motSpeedRight < 1535 && motSpeedRight > 1485)
+    {
+      digitalWrite(stationaryLED, HIGH);
+    }
+
+    /**************************************
+      turns on and off reverseLED(white) telling user if in reverse or not (on = reverse, off = no reverse)
+    ***************************************/
+
+    if (motSpeedLeft > 1485 && motSpeedRight > 1485)
+    {
+      digitalWrite(reverseLED, LOW);
+    }
+
+    if (motSpeedLeft < 1485 && motSpeedRight < 1485)
+    {
+      digitalWrite(reverseLED, HIGH);
+    }
+
+    Serial.print("motor speed left = ");
+    Serial.print(motSpeedLeft);
+    Serial.print(" motor speed right = ");
+    Serial.print(motSpeedRight);
+    Serial.print(" Xval = ");
+    Serial.print(Xval);
+    Serial.print(" XnewVal = ");
+    Serial.print(XnewVal);
+    Serial.print(" Yval = ");
+    Serial.print(Yval);
+    Serial.print(" YnewVal = ");
+    Serial.print(YnewVal);
+    Serial.print(" tankState = ");
+    Serial.println(tankState);
+  }
+
+  else
+  {
+    if (Yval == 0)
+    {
+      digitalWrite(stationaryLED, LOW);
+      LTalon.write(1700);
+      RTalon.write(1700);
+      delay(1000);
+      LTalon.write(1700);
+      RTalon.write(1300);
+      delay(1000);
+      LTalon.write(1300);
+      RTalon.write(1700);
+      delay(1000);
+      LTalon.write(1300);
+      RTalon.write(1300);
+      digitalWrite(stationaryLED, HIGH);
+    }
+  }
+}
+
+
+/*****************************************************
+  Calibrates Joystick ******************************************************/
+int getNewVal( int badButtonVal, int actualVal)
+{
+  if ( actualVal <= badButtonVal )
+  {
+    return actualVal * ( 512. / badButtonVal );
+  }
+
+  else
+  {
+    return 1023. - ( ( 1023. - actualVal ) * ( 511. / ( 1023. - badButtonVal ) ) );
+  }
+}
