@@ -1,0 +1,27 @@
+const int pulPin = 12;//PUL+
+const int dirPin = 11;//DIR+
+//PUL- AND DIR- ARE BOTH GROUNDED 
+//BUT TO FUNCTION AT LEAST PUL- NEEDS TO BE
+//GROUNDED.-----> BUT IT IS ADVICED THEY
+// BOTH GET GROUNDED TO AVOID UB(UNEXEPCTED
+// - BEHAVIOR)   
+ 
+void setup() {
+  pinMode(pulPin,OUTPUT);
+  pinMode(dirPin,OUTPUT);
+  
+  digitalWrite(dirPin,LOW); 
+  //Enables the motor to move in a particular direction
+}
+void loop() 
+{
+
+  digitalWrite(pulPin,HIGH); 
+  delay(1);
+  digitalWrite(pulPin,LOW);
+
+}
+
+//SETUP:
+// DM542 STEPPER DRIVER
+// NEMA 23
