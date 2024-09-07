@@ -1,0 +1,131 @@
+/*
+
+Programmer:
+Alejandro Arreguin
+
+Purpose of this code:
+To control a stepper motor with a joystick for testing purposes.
+
+Notes:
+By no means is this code efficient nor is it meant to be
+as this code was made for testing purposes only. Although
+if it were to be applied to a final design,
+some code can be rewritten to make it better.
+For better understanding of the Arduino language please reference:
+
+https://www.arduino.cc/reference/en/
+
+if you are not familiar with it yet, or need a refresher( i sure did haha! ).
+
+*/
+
+
+//Joystick pins and values
+const int XPin = A0;
+const int PulPin = 3;//PUL+, this controls the Speed
+const int DirPin = 2;//DIR+, this controls the direction[ Clockwise or Counter CW ]
+//Ground PUL- and DIR-
+
+int XVal = 0;
+
+void setup()
+{
+
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+  // sends data to the Serial Port at the rate of 9600 Bytes Per Second [bps]
+
+  pinMode(XPin, INPUT); // sets this port to read inputs
+  pinMode( PulPin, OUTPUT); // sets this port to send data
+  pinMode( DirPin, OUTPUT);
+  // PulPin and DirPin is the input for the stepper driver
+  
+}
+
+void loop()
+{
+
+  XVal = map( analogRead(XPin), 0, 1023, 0, 10000);
+  // Xval should have values between 0 to 10 000
+
+  Serial.println(XVal);
+  // in the serial monitor, values will pop up which will be in the range of Zero[0] to Ten Thousand [10000]
+  // this is recommended opposed to Serial.print(...) because ".println" one automatically makes a new line for you
+  // after printing once on the Serial Monitor, the ".print" does not.
+ 
+  if(XVal <= 4000 and XVal >= 3000)
+  // level 1 Speed, the speeds increase from here on by decreasing the millisecond delay
+  {
+    digitalWrite(DirPin,LOW); 
+    digitalWrite(PulPin,HIGH); 
+    delay(100);
+    digitalWrite(PulPin,LOW);
+  }
+
+  if(XVal <= 3000 and XVal >= 2000)
+  // level 2 Speed
+  {
+    digitalWrite(DirPin,LOW); 
+    digitalWrite(PulPin,HIGH); 
+    delay(60);
+    digitalWrite(PulPin,LOW);
+  }
+
+  if(XVal <= 2000 and XVal >= 1000)
+  // level 3 Speed
+  {
+    digitalWrite(DirPin,LOW); 
+    digitalWrite(PulPin,HIGH); 
+    delay(30);
+    digitalWrite(PulPin,LOW);
+  }
+ 
+  if( XVal <= 1000)
+  // level 4 Speed, fastest speed.
+  {
+    digitalWrite(DirPin,LOW); 
+    digitalWrite(PulPin,HIGH); 
+    delay(1);
+    digitalWrite(PulPin,LOW);
+  }
+
+//--------------------------------------------------------------
+
+
+  if( XVal >= 6000 and XVal <= 7000 )
+  // level 1 Speed
+  {
+    digitalWrite(DirPin,HIGH); 
+    digitalWrite(PulPin,HIGH); 
+    delay(100);
+    digitalWrite(PulPin,LOW);
+  }
+ 
+  if( XVal > 7000 and XVal <= 8000 )
+  // level 2 Speed
+  {
+    digitalWrite(DirPin,HIGH); 
+    digitalWrite(PulPin,HIGH); 
+    delay(60);
+    digitalWrite(PulPin,LOW);
+  }
+
+  if( XVal > 8000 and XVal <= 9000 )
+  // level 3 Speed
+  {
+    digitalWrite(DirPin,HIGH); 
+    digitalWrite(PulPin,HIGH); 
+    delay(30);
+    digitalWrite(PulPin,LOW);
+  }
+ 
+  if( XVal > 9000 and XVal <= 10000 )
+  // level 4 Speed
+  {
+    digitalWrite(DirPin,HIGH); 
+    digitalWrite(PulPin,HIGH); 
+    delay(1);
+    digitalWrite(PulPin,LOW);
+  }
+
+}
